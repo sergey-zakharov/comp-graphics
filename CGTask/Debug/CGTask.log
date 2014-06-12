@@ -1,10 +1,52 @@
-﻿Сборка начата 12.06.2014 6:32:01.
+﻿Сборка начата 12.06.2014 8:10:18.
      1>Проект "C:\Users\Alexander\Desktop\CGTaskSerge\CGTask\CGTask.vcxproj" в узле 2 (целевые объекты Build).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (CGTask.vcxproj).  This can lead to incorrect clean and rebuild behavior.
      1>ClCompile:
-         E:\VS2013\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Material.cpp
-         Material.cpp
+         E:\VS2013\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Mesh.cpp
+         Mesh.cpp
          Unknown compiler version - please run the configure tests and report the results
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(109): warning C4305: инициализация: усечение из "double" к "float"
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(228): warning C4018: <: несоответствие типов со знаком и без знака
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(227): warning C4101: col: неиспользованная локальная переменная
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(244): warning C4138: "*/" найден вне комментария
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(255): warning C4018: <: несоответствие типов со знаком и без знака
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(298): warning C4305: инициализация: усечение из "double" к "float"
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(339): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(366): warning C4305: =: усечение из "double" к "float"
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(369): warning C4305: =: усечение из "double" к "float"
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(374): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(375): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(376): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(393): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(394): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(395): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(422): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(423): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(424): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(438): warning C4305: =: усечение из "double" к "float"
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(455): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(456): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(457): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(466): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(467): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(468): warning C4244: аргумент: преобразование "double" в "float", возможна потеря данных
+     1>e:\vs2013\vc\include\utility(144): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+                 c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(265): см. ссылку на создание экземпляров функции шаблон при компиляции "std::pair<float,float>::pair<_Ty1,_Ty2,void>(_Other1 &&,_Other2 &&)"
+                 with
+                 [
+                     _Ty1=double
+         ,            _Ty2=double
+         ,            _Other1=double
+         ,            _Other2=double
+                 ]
+                 c:\users\alexander\desktop\cgtaskserge\cgtask\mesh.cpp(265): см. ссылку на создание экземпляров функции шаблон при компиляции "std::pair<float,float>::pair<_Ty1,_Ty2,void>(_Other1 &&,_Other2 &&)"
+                 with
+                 [
+                     _Ty1=double
+         ,            _Ty2=double
+         ,            _Other1=double
+         ,            _Other2=double
+                 ]
        Link:
          E:\VS2013\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Alexander\Desktop\CGTaskSerge\Debug\CGTaskSerge.exe" /INCREMENTAL /NOLOGO glew32.lib glfw3.lib opengl32.lib glu32.lib tinyxml2.lib libtess2.lib glimgD.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Alexander\Desktop\CGTaskSerge\Debug\CGTaskSerge.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Alexander\Desktop\CGTaskSerge\Debug\CGTaskSerge.lib" /MACHINE:X86 Debug\CGTaskSerge.res
          Debug\Application.obj
@@ -21,10 +63,9 @@
          Debug\RoadMaterial.obj
          Debug\Shaders.obj
          Debug\textures.obj
-     1>LINK : warning LNK4098: библиотека по умолчанию "MSVCRT" противоречит использованию других библиотек; используйте параметр /NODEFAULTLIB:library
          CGTask.vcxproj -> C:\Users\Alexander\Desktop\CGTaskSerge\Debug\CGTaskSerge.exe
      1>Сборка проекта "C:\Users\Alexander\Desktop\CGTaskSerge\CGTask\CGTask.vcxproj" завершена (целевые объекты Build).
 
 Сборка успешно завершена.
 
-Затраченное время: 00:00:03.96
+Затраченное время: 00:00:02.92

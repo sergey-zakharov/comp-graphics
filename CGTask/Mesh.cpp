@@ -15,10 +15,15 @@ const float A = -5;
 const float B = -5;
 const float C = 0;
 
-int paveBuildings( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors );
+
+
+
+
+
+int paveBuildings( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords );
 int paveRoads( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors );
-int pave_floor( float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors );
-int pave_wall( double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, bool col );
+int pave_floor( float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords);
+int pave_wall( double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords, bool col );
 int pave_roof( vector<vector<pair<float, float>>> triangles, double height, std::vector<float>& vertices, std::vector<float>& colors );
 int pave_road( double first_x, double first_y, double second_x, double second_y, std::vector<float>& vertices, std::vector<float>& colors );
 
@@ -32,18 +37,7 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	return low + (high - low) * (rand() % 1000) * 0.001f;
 //}
 
-//void addVec2( std::vector<float>& vec, float s, float t )
-//{
-//	vec.push_back( s );
-//	vec.push_back( t );
-//}
-//
-//void addVec3( std::vector<float>& vec, float x, float y, float z )
-//{
-//	vec.push_back( x );
-//	vec.push_back( y );
-//	vec.push_back( z );
-//}
+
 //
 //void addVec4( std::vector<float>& vec, float r, float g, float b, float a )
 //{
@@ -52,6 +46,12 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	vec.push_back( b );
 //	vec.push_back( a );
 //}
+
+void addPair( std::vector<float>& vec, float s, float t )
+{
+	vec.push_back( s );
+	vec.push_back( t );
+}
 
 void addPoint( std::vector<float>& vec, float x, float y, float z )
 {
@@ -110,11 +110,15 @@ Mesh Mesh::makeGround()
 
 	std::vector<float> vertices;
 	std::vector<float> colors;
+	std::vector<float> normals;
+	std::vector<float> texcoords;
 
-	surfaceNumTris += pave_floor( 0, 0, 100, 100, vertices, colors );
+	surfaceNumTris += pave_floor( 0, 0, 100, 100, vertices, colors, normals, texcoords);
 	//pave_wall(2, 2, 60, 50, 10, vertices, colors);
 
-	vertices.insert( vertices.end(), colors.begin(), colors.end() );
+	//vertices.insert( vertices.end(), colors.begin(), colors.end() );
+	vertices.insert( vertices.end(), normals.begin(), normals.end() );
+	vertices.insert( vertices.end(), texcoords.begin(), texcoords.end() );
 
 	unsigned int vbo = 0;
 	glGenBuffers( 1, &vbo );
@@ -128,7 +132,8 @@ Mesh Mesh::makeGround()
 	glEnableVertexAttribArray( 1 );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
-	glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(surfaceNumTris * 3 * 3 * 4) );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(surfaceNumTris * 3 * 3 * 4) );
+	glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(surfaceNumTris * 3 * 3 * 4 * 2) );
 
 	glBindVertexArray( 0 );
 
@@ -144,8 +149,10 @@ Mesh Mesh::makeBuildings(MapWorker* worker)
 
 	std::vector<float> vertices;
 	std::vector<float> colors;
+	std::vector<float> normals;
+	std::vector<float> texcoords;
 
-	buildingNumTris += paveBuildings(worker, vertices, colors );
+	buildingNumTris += paveBuildings(worker, vertices, colors, normals, texcoords);
 
 	vertices.insert( vertices.end(), colors.begin(), colors.end() );
 
@@ -161,7 +168,8 @@ Mesh Mesh::makeBuildings(MapWorker* worker)
 	glEnableVertexAttribArray( 1 );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
-	glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(buildingNumTris * 3 * 3 * 4) );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(buildingNumTris * 3 * 3 * 4) );
+	glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(buildingNumTris * 3 * 3 * 4 * 2) );
 
 	glBindVertexArray( 0 );
 
@@ -230,7 +238,7 @@ int paveRoads(MapWorker* worker, std::vector<float>& vertices, std::vector<float
 }
 
 // используя pave_wall и paveRoof отрисовать дома
-int paveBuildings(MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors )
+int paveBuildings( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords )
 {
 	int buildingNumTris = 0;
 	std::vector<Building*/*way*/> buildings = worker->buildings;
@@ -251,7 +259,7 @@ int paveBuildings(MapWorker* worker, std::vector<float>& vertices, std::vector<f
 				col = true;
 			} else
 				col = false;
-			buildingNumTris += pave_wall( curCorner.first / 10., curCorner.second / 10., nextCorner.first / 10., nextCorner.second / 10., height / 10, vertices, colors, col );
+			buildingNumTris += pave_wall( curCorner.first / 10., curCorner.second / 10., nextCorner.first / 10., nextCorner.second / 10., height / 10, vertices, colors, normals, texcoords, col );
 			curCorner = nextCorner;
 			//if( i != corners.size() - 1 ) {
 			roof_corners.push_back( pair<float, float>( curCorner.first / 10., curCorner.second / 10. ) );
@@ -264,8 +272,9 @@ int paveBuildings(MapWorker* worker, std::vector<float>& vertices, std::vector<f
 		buildingNumTris += pave_roof( roof_tris, height / 10, vertices, colors );
 	}
 	//vertices.insert( vertices.end(), colors.begin(), colors.end() );
-	vertices.insert( vertices.end(), colors.begin(), colors.end() );
-
+	//vertices.insert( vertices.end(), colors.begin(), colors.end() );
+	vertices.insert( vertices.end(), normals.begin(), normals.end() );
+	vertices.insert( vertices.end(), texcoords.begin(), texcoords.end() );
 	unsigned int vbo = 0;
 	glGenBuffers( 1, &vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
@@ -284,7 +293,7 @@ int paveBuildings(MapWorker* worker, std::vector<float>& vertices, std::vector<f
 }
 
 // paving functions
-int pave_floor( float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors )
+int pave_floor( float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords)
 {
 	float r = 0.7, g = .7, b = 0.7;
 	int surfaceNumTris = 0;
@@ -312,9 +321,17 @@ int pave_floor( float first_x, float first_y, float second_x, float second_y, st
 			addPoint( vertices, A + (float)j, B + i, C );
 			addPoint( vertices, A + (float)j, B + i + iDirection, C );
 
+			/*addColor( colors, r, g, b, 1.0 );
 			addColor( colors, r, g, b, 1.0 );
-			addColor( colors, r, g, b, 1.0 );
-			addColor( colors, r, g, b, 1.0 );
+			addColor( colors, r, g, b, 1.0 );*/
+
+			addPoint( normals, 1.0, 0.0, 0.0 ); // TODО!!!
+			addPoint( normals, 1.0, 0.0, 0.0 );
+			addPoint( normals, 1.0, 0.0, 0.0 );
+
+			addPair( texcoords, 0.0, 1.0 );
+			addPair( texcoords, 1.0, 1.0 );
+			addPair( texcoords, 1.0, 0.0 );
 
 			surfaceNumTris++;
 
@@ -323,9 +340,16 @@ int pave_floor( float first_x, float first_y, float second_x, float second_y, st
 			addPoint( vertices, A + (float)j + jDirection, B + i + iDirection, C );
 			addPoint( vertices, A + (float)j, B + i + iDirection, C );
 
+			/*addColor( colors, r, g, b, 1.0 );
 			addColor( colors, r, g, b, 1.0 );
-			addColor( colors, r, g, b, 1.0 );
-			addColor( colors, r, g, b, 1.0 );
+			addColor( colors, r, g, b, 1.0 );*/
+			addPoint( normals, 1.0, 0.0, 0.0 ); // TODО!!!
+			addPoint( normals, 1.0, 0.0, 0.0 );
+			addPoint( normals, 1.0, 0.0, 0.0 );
+
+			addPair( texcoords, 0.0, 1.0 );
+			addPair( texcoords, 1.0, 1.0 );
+			addPair( texcoords, 1.0, 0.0 );
 
 			surfaceNumTris++;
 		}
@@ -333,7 +357,7 @@ int pave_floor( float first_x, float first_y, float second_x, float second_y, st
 	return surfaceNumTris;
 }
 
-int pave_wall( double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, bool col )
+int pave_wall( double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, std::vector<float>& normals, std::vector<float>& texcoords, bool col )
 {
 	int buildingNumTris = 0;
 	float r, g, b;
@@ -351,9 +375,17 @@ int pave_wall( double first_x, double first_y, double second_x, double second_y,
 	addPoint( vertices, second_x, second_y, C );
 	addPoint( vertices, first_x, first_y, height );
 
+	/*addColor( colors, r, g, b, 1.0 );
 	addColor( colors, r, g, b, 1.0 );
-	addColor( colors, r, g, b, 1.0 );
-	addColor( colors, r, g, b, 1.0 );
+	addColor( colors, r, g, b, 1.0 );*/
+
+	addPoint( normals, 1.0, 0.0, 0.0 ); // TODО!!!
+	addPoint( normals, 1.0, 0.0, 0.0 );
+	addPoint( normals, 1.0, 0.0, 0.0 );
+
+	addPair( texcoords, 0.0, 1.0 );
+	addPair( texcoords, 1.0, 1.0 );
+	addPair( texcoords, 1.0, 0.0 );
 
 	buildingNumTris++;
 
@@ -362,9 +394,17 @@ int pave_wall( double first_x, double first_y, double second_x, double second_y,
 	addPoint( vertices, second_x, second_y, C );
 	addPoint( vertices, second_x, second_y, height );
 
+	/*addColor( colors, r, g, b, 1.0 );
 	addColor( colors, r, g, b, 1.0 );
-	addColor( colors, r, g, b, 1.0 );
-	addColor( colors, r, g, b, 1.0 );
+	addColor( colors, r, g, b, 1.0 );*/
+
+	addPoint( normals, 1.0, 0.0, 0.0 );
+	addPoint( normals, 1.0, 0.0, 0.0 );
+	addPoint( normals, 1.0, 0.0, 0.0 );
+
+	addPair( texcoords, 0.0, 1.0 );
+	addPair( texcoords, 1.0, 1.0 );
+	addPair( texcoords, 1.0, 0.0 );
 
 	buildingNumTris++;
 
@@ -553,9 +593,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //			addVec3( normals, cos( phi1 ) * sin( theta ), sin( phi1 ) * sin( theta ), cos( theta ) );
 //			addVec3( normals, cos( phi1 ) * sin( theta1 ), sin( phi1 ) * sin( theta1 ), cos( theta1 ) );
 //
-//			addVec2( texcoords, (float)j / N, 1.0f - (float)i / M );
-//			addVec2( texcoords, (float)(j + 1) / N, 1.0f - (float)i / M );
-//			addVec2( texcoords, (float)(j + 1) / N, 1.0f - (float)(i + 1) / M );
+//			addPair( texcoords, (float)j / N, 1.0f - (float)i / M );
+//			addPair( texcoords, (float)(j + 1) / N, 1.0f - (float)i / M );
+//			addPair( texcoords, (float)(j + 1) / N, 1.0f - (float)(i + 1) / M );
 //
 //			numVertices += 3;
 //
@@ -568,9 +608,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //			addVec3( normals, cos( phi1 ) * sin( theta1 ), sin( phi1 ) * sin( theta1 ), cos( theta1 ) );
 //			addVec3( normals, cos( phi ) * sin( theta1 ), sin( phi ) * sin( theta1 ), cos( theta1 ) );
 //
-//			addVec2( texcoords, (float)j / N, 1.0f - (float)i / M );
-//			addVec2( texcoords, (float)(j + 1) / N, 1.0f - (float)(i + 1) / M );
-//			addVec2( texcoords, (float)j / N, 1.0f - (float)(i + 1) / M );
+//			addPair( texcoords, (float)j / N, 1.0f - (float)i / M );
+//			addPair( texcoords, (float)(j + 1) / N, 1.0f - (float)(i + 1) / M );
+//			addPair( texcoords, (float)j / N, 1.0f - (float)(i + 1) / M );
 //
 //			numVertices += 3;
 //		}
@@ -615,9 +655,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//front 2
 //	addVec3( vertices, size, -size, size );
@@ -628,9 +668,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 0.0 );
 //
 //	//left 1
 //	addVec3( vertices, -size, -size, size );
@@ -641,9 +681,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, -1.0, 0.0 );
 //	addVec3( normals, 0.0, -1.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//left 2
 //	addVec3( vertices, -size, -size, size );
@@ -654,9 +694,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, -1.0, 0.0 );
 //	addVec3( normals, 0.0, -1.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 0.0 );
 //
 //	//top 1
 //	addVec3( vertices, -size, size, size );
@@ -667,9 +707,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//top 2
 //	addVec3( vertices, -size, size, size );
@@ -680,9 +720,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//back 1
 //	addVec3( vertices, -size, -size, size );
@@ -693,9 +733,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, -1.0, 0.0, 0.0 );
 //	addVec3( normals, -1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 1.0, 1.0 );
 //
 //	//back 2
 //	addVec3( vertices, -size, -size, size );
@@ -706,9 +746,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, -1.0, 0.0, 0.0 );
 //	addVec3( normals, -1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//right 1
 //	addVec3( vertices, -size, size, size );
@@ -719,9 +759,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 1.0, 0.0 );
 //	addVec3( normals, 0.0, 1.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 1.0, 1.0 );
 //
 //	//right 2
 //	addVec3( vertices, -size, size, size );
@@ -732,9 +772,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 1.0, 0.0 );
 //	addVec3( normals, 0.0, 1.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//bottom 1
 //	addVec3( vertices, -size, size, -size );
@@ -745,9 +785,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, -1.0 );
 //	addVec3( normals, 0.0, 0.0, -1.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 1.0, 1.0 );
 //
 //	//bottom 2
 //	addVec3( vertices, -size, size, -size );
@@ -758,9 +798,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, -1.0 );
 //	addVec3( normals, 0.0, 0.0, -1.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 0.0 );
 //
 //	vertices.insert( vertices.end(), normals.begin(), normals.end() );
 //	vertices.insert( vertices.end(), texcoords.begin(), texcoords.end() );
@@ -803,9 +843,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
 //
 //	//front 2
 //	addVec3( vertices, 0.0, -size, size );
@@ -816,9 +856,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //	addVec3( normals, 1.0, 0.0, 0.0 );
 //
-//	addVec2( texcoords, 0.0, 1.0 );
-//	addVec2( texcoords, 1.0, 0.0 );
-//	addVec2( texcoords, 0.0, 0.0 );
+//	addPair( texcoords, 0.0, 1.0 );
+//	addPair( texcoords, 1.0, 0.0 );
+//	addPair( texcoords, 0.0, 0.0 );
 //
 //	vertices.insert( vertices.end(), normals.begin(), normals.end() );
 //	vertices.insert( vertices.end(), texcoords.begin(), texcoords.end() );
@@ -861,9 +901,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //
-//	addVec2( texcoords, -numTiles, numTiles );
-//	addVec2( texcoords, numTiles, numTiles );
-//	addVec2( texcoords, numTiles, -numTiles );
+//	addPair( texcoords, -numTiles, numTiles );
+//	addPair( texcoords, numTiles, numTiles );
+//	addPair( texcoords, numTiles, -numTiles );
 //
 //	//front 2
 //	addVec3( vertices, -size, size, 0.0 );
@@ -874,9 +914,9 @@ double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, doub
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //	addVec3( normals, 0.0, 0.0, 1.0 );
 //
-//	addVec2( texcoords, -numTiles, numTiles );
-//	addVec2( texcoords, numTiles, -numTiles );
-//	addVec2( texcoords, -numTiles, -numTiles );
+//	addPair( texcoords, -numTiles, numTiles );
+//	addPair( texcoords, numTiles, -numTiles );
+//	addPair( texcoords, -numTiles, -numTiles );
 //
 //	vertices.insert( vertices.end(), normals.begin(), normals.end() );
 //	vertices.insert( vertices.end(), texcoords.begin(), texcoords.end() );

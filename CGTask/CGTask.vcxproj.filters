@@ -112,6 +112,24 @@
     <None Include="..\shaders\CGTask\shader.vert">
       <Filter>Файлы ресурсов</Filter>
     </None>
+    <None Include="..\shaders\CGTask\building.frag">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\shaders\CGTask\building.vert">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\shaders\CGTask\ground.frag">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\shaders\CGTask\ground.vert">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\shaders\CGTask\road.frag">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\shaders\CGTask\road.vert">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CGTaskSerge.rc">

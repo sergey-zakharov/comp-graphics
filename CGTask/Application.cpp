@@ -22,78 +22,42 @@ int version = 2; // 1 - map_ny_cooper_triangle with houses only, 2 - house_in_ny
 
 const char* file = "../house_in_ny.osm"; //house_in_ny , map_ny_cooper_triangle
 
-
-
-
-
-//====================================== Вспомогательные функции
-
-
-
-//======================================
-
 //Функция обратного вызова для обработки нажатий на клавиатуре
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	Application* app = (Application*)glfwGetWindowUserPointer(window);
+	Camera* camera = (Camera*)glfwGetWindowUserPointer( window );
 
-
-	if( action == GLFW_PRESS) {
-		switch( key ) {
-			case GLFW_KEY_ESCAPE: 
-				glfwSetWindowShouldClose(window, GL_TRUE); 
-				break;
-			case GLFW_KEY_A:
-				app->rotateLeft(true);
-				break;
-			case GLFW_KEY_D:
-				app->rotateRight(true);
-				break;
-			case GLFW_KEY_W:
-				app->rotateUp(true);	
-				break;
-			case GLFW_KEY_S:
-				app->rotateDown(true);
-				break;
-			case GLFW_KEY_E:
-				app->zoomIn(true);
-				break;
-			case GLFW_KEY_Q:
-				app->zoomOut(true);
-				break;
-			case GLFW_KEY_Z:
-				app->moveLeft(true);
-				break;
-			case GLFW_KEY_C:
-				app->moveRight(true);
-				break;
+	if( action == GLFW_PRESS ) {
+		if( key == GLFW_KEY_ESCAPE ) {
+			glfwSetWindowShouldClose( window, GL_TRUE );
+		} else if( key == GLFW_KEY_A ) {
+			camera->rotateLeft( true );
+		} else if( key == GLFW_KEY_D ) {
+			camera->rotateRight( true );
+		} else if( key == GLFW_KEY_W ) {
+			camera->rotateUp( true );
+		} else if( key == GLFW_KEY_S ) {
+			camera->rotateDown( true );
+		} else if( key == GLFW_KEY_R ) {
+			camera->zoomUp( true );
+		} else if( key == GLFW_KEY_F ) {
+			camera->zoomDown( true );
+		} else if( key == GLFW_KEY_SPACE ) {
+			camera->homePos();
 		}
 	} else if( action == GLFW_RELEASE ) {
-		switch( key ) {
-			case GLFW_KEY_A:
-				app->rotateLeft(false);
-				break;
-			case GLFW_KEY_D:
-				app->rotateRight(false);
-				break;
-			case GLFW_KEY_W:
-				app->rotateUp(false);
-				break;
-			case GLFW_KEY_S:
-				app->rotateDown(false);
-				break;
-			case GLFW_KEY_E:
-				app->zoomIn(false);
-				break;
-			case GLFW_KEY_Q:
-				app->zoomOut(false);
-				break;
-			case GLFW_KEY_Z:
-				app->moveLeft(false);
-				break;
-			case GLFW_KEY_C:
-				app->moveRight(false);
-				break;
+		if( key == GLFW_KEY_A ) {
+			camera->rotateLeft( false );
+		} else if( key == GLFW_KEY_D ) {
+			camera->rotateRight( false );
+		} else if( key == GLFW_KEY_W ) {
+			camera->rotateUp( false );
+		} else if( key == GLFW_KEY_S ) {
+			camera->rotateDown( false );
+		} else if( key == GLFW_KEY_R ) {
+			camera->zoomUp( false );
+		} else if( key == GLFW_KEY_F ) {
+			camera->zoomDown( false );
 		}
 	}
 }
@@ -146,6 +110,7 @@ void Application::initContext()
 		std::cerr << "ERROR: could not start GLFW3\n";
 		exit(1);
 	}
+	glfwWindowHint( GLFW_STENCIL_BITS, 8 );
 
 	_window = glfwCreateWindow(1024, 768, "3D NY Map using OpenStreetMaps", NULL, NULL);
 	if( !_window ) {
@@ -155,7 +120,7 @@ void Application::initContext()
 	}
 	glfwMakeContextCurrent(_window);
 
-	glfwSetWindowUserPointer(_window, this); //регистрируем указатель на данный объект, чтобы потом использовать его в функциях обратного вызова
+	glfwSetWindowUserPointer(_window, &_mainCamera); //регистрируем указатель на данный объект, чтобы потом использовать его в функциях обратного вызова
 }
 
 void Application::initGL()
@@ -170,6 +135,7 @@ void Application::initGL()
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	glEnable( GL_POLYGON_OFFSET_FILL );
 }
 
 void Application::makeScene()
@@ -286,7 +252,7 @@ void Application::makeSceneImplementation()
 	_ground = Mesh::makeGround();
 	
 	//Инициализация значений переменных освщения
-	_lightPos = glm::vec4( 2.0f, 2.0f, 0.5f, 1.0f );
+	_lightPos = glm::vec4( 20.0f, 20.0f, 0.5f, 1.0f );
 	_ambientColor = glm::vec3( 0.2, 0.2, 0.2 );
 	_diffuseColor = glm::vec3( 0.8, 0.8, 0.8 );
 	_specularColor = glm::vec3( 0.5, 0.5, 0.5 );
@@ -493,10 +459,12 @@ void Application::drawBuildingsOnScene( Camera& camera )
 	_buildingMaterial.applyCommonUniforms();
 
 	//if( demoNum == 4 || demoNum == 5 ) {
-		glEnable( GL_CULL_FACE );
+	/*	glEnable( GL_CULL_FACE );
 		glFrontFace( GL_CW );
-		glCullFace( GL_BACK );
+		glCullFace( GL_BACK );*/
 	//}
+	//glEnable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 	/*if( demoNum == 5 ) {
 		glEnable( GL_BLEND );
@@ -514,7 +482,7 @@ void Application::drawBuildingsOnScene( Camera& camera )
 	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
 	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
 	glBindSampler( 0, _sampler );
-
+	
 	_buildingMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
 	_buildingMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
 	_buildingMaterial.setShininess( 100.0f );
@@ -572,34 +540,34 @@ void Application::drawBuildingsOnScene( Camera& camera )
 
 	//glDisable( GL_STENCIL_TEST );
 	//glDisable( GL_BLEND );
-	glDisable( GL_CULL_FACE );
+	//glDisable( GL_CULL_FACE );
 }
 void Application::drawRoadsOnScene( Camera& camera )
 {
 	//====== Buildings ======	
 	glUseProgram( _roadMaterial.getProgramId() ); //Подключаем общий шейдер для всех объектов
 
-	_buildingMaterial.setTime( (float)glfwGetTime() );
-	_buildingMaterial.setViewMatrix( camera.getViewMatrix() );
-	_buildingMaterial.setProjectionMatrix( camera.getProjMatrix() );
+	_roadMaterial.setTime( (float)glfwGetTime() );
+	_roadMaterial.setViewMatrix( camera.getViewMatrix() );
+	_roadMaterial.setProjectionMatrix( camera.getProjMatrix() );
 
-	_buildingMaterial.setLightPos( _lightPos );
-	_buildingMaterial.setAmbientColor( _ambientColor );
-	_buildingMaterial.setDiffuseColor( _diffuseColor );
-	_buildingMaterial.setSpecularColor( _specularColor );
+	_roadMaterial.setLightPos( _lightPos );
+	_roadMaterial.setAmbientColor( _ambientColor );
+	_roadMaterial.setDiffuseColor( _diffuseColor );
+	_roadMaterial.setSpecularColor( _specularColor );
 
-	_buildingMaterial.applyCommonUniforms();
+	_roadMaterial.applyCommonUniforms();
 
 	//if( demoNum == 4 || demoNum == 5 ) {
-	glEnable( GL_CULL_FACE );
+	/*glEnable( GL_CULL_FACE );
 	glFrontFace( GL_CW );
-	glCullFace( GL_BACK );
+	glCullFace( GL_BACK );*/
 	//}
 
-	/*if( demoNum == 5 ) {
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	}
+	//if( demoNum == 5 ) {
+	//glEnable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	/*}
 
 	if( demoNum == 6 ) {
 	glEnable( GL_STENCIL_TEST );
@@ -608,18 +576,18 @@ void Application::drawRoadsOnScene( Camera& camera )
 	glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
 	}*/
 
-	//====== Buildings ======
+	//====== Roads ======
 	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
-	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
+	glBindTexture( GL_TEXTURE_2D, _roadTexId );
 	glBindSampler( 0, _sampler );
 
-	_buildingMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
-	_buildingMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
-	_buildingMaterial.setShininess( 100.0f );
+	_roadMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	_roadMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
+	_roadMaterial.setShininess( 100.0f );
 	_buildingMaterial.applyModelSpecificUniforms();
 
-	glBindVertexArray( _buildings.getVao() ); //Подключаем VertexArray для сферы
-	glDrawArrays( GL_TRIANGLES, 0, _buildings.getNumVertices() ); //Рисуем сферу
+	glBindVertexArray( _roads.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _roads.getNumVertices() ); //Рисуем сферу
 
 #if 0
 	glCullFace( GL_FRONT );
@@ -670,7 +638,7 @@ void Application::drawRoadsOnScene( Camera& camera )
 
 	//glDisable( GL_STENCIL_TEST );
 	//glDisable( GL_BLEND );
-	glDisable( GL_CULL_FACE );
+	//glDisable( GL_CULL_FACE );
 }
 void Application::drawGroundOnScene( Camera& camera )
 {
@@ -687,14 +655,17 @@ void Application::drawGroundOnScene( Camera& camera )
 
 	_groundMaterial.applyCommonUniforms();
 
-	glEnable( GL_CULL_FACE );
-	glFrontFace( GL_CW );
-	glCullFace( GL_BACK );
+	//glEnable( GL_CULL_FACE );
+	//glFrontFace( GL_CW );
+	//glCullFace( GL_BACK );
 	
+	//glEnable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
 	//====== Ground ======
 	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
 	glBindTexture( GL_TEXTURE_2D, _groundTexId );
-	glBindSampler( 0, _sampler );
+	glBindSampler( 0, _repeatSampler);
 
 	_groundMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
 	_groundMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
@@ -704,5 +675,5 @@ void Application::drawGroundOnScene( Camera& camera )
 	glBindVertexArray( _ground.getVao() ); //Подключаем VertexArray для сферы
 	glDrawArrays( GL_TRIANGLES, 0, _ground.getNumVertices() ); //Рисуем сферу
 
-	glDisable( GL_CULL_FACE );
+	//glDisable( GL_CULL_FACE );
 }

@@ -105,8 +105,14 @@
     <ClInclude Include="splay.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\shaders\CGTask\building.frag" />
+    <None Include="..\shaders\CGTask\building.vert" />
     <None Include="..\shaders\CGTask\color.frag" />
     <None Include="..\shaders\CGTask\color.vert" />
+    <None Include="..\shaders\CGTask\ground.frag" />
+    <None Include="..\shaders\CGTask\ground.vert" />
+    <None Include="..\shaders\CGTask\road.frag" />
+    <None Include="..\shaders\CGTask\road.vert" />
     <None Include="..\shaders\CGTask\shader.frag" />
     <None Include="..\shaders\CGTask\shader.vert" />
   </ItemGroup>
