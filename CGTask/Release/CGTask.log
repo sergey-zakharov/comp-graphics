@@ -1,0 +1,25 @@
+﻿Сборка начата 16.03.2014 20:21:02.
+     1>Проект "C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\CGTask\CGTask.vcxproj" в узле 2 (целевые объекты Build).
+     1>ClCompile:
+         E:\VS2013\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Application.cpp program.cpp
+         Application.cpp
+     1>Application.cpp(170): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+     1>Application.cpp(195): warning C4244: аргумент: преобразование "double" в "const float", возможна потеря данных
+     1>Application.cpp(251): warning C4305: инициализация: усечение из "double" к "float"
+     1>Application.cpp(257): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+     1>Application.cpp(258): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+     1>Application.cpp(261): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+     1>Application.cpp(262): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+         GLM: perspective function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
+         program.cpp
+       Link:
+         E:\VS2013\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\Release\CGTask.exe" /NOLOGO glew32.lib glfw3.lib opengl32.lib glu32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\Release\CGTask.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\Release\CGTask.lib" /MACHINE:X86 /SAFESEH Release\Application.obj
+         Release\program.obj
+         Создание кода
+         Создание кода завершено
+         CGTask.vcxproj -> C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\Release\CGTask.exe
+     1>Сборка проекта "C:\Users\Alexander\Documents\Visual Studio 2013\Projects\CGTask\CGTask\CGTask.vcxproj" завершена (целевые объекты Build).
+
+Сборка успешно завершена.
+
+Затраченное время: 00:00:03.93

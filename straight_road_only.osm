@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='true' generator='JOSM'>
+  <bounds minlat='40.6986899' minlon='-74.0598464' maxlat='40.6998043' maxlon='-74.0560269' origin='CGImap 0.3.3 (9479 thorn-01.openstreetmap.org)' />
+  <bounds minlat='40.6986899' minlon='-74.0598464' maxlat='40.6998043' maxlon='-74.0560269' origin='OpenStreetMap server' />
+  <node id='1' action='modify' visible='true' lat='40.69930775092241' lon='-74.05678106487352' />
+  <node id='2' action='modify' visible='true' lat='40.69930775092241' lon='-74.05931696862181' />
+  <way id='-7' action='modify' visible='true'>
+    <nd ref='1' />
+    <nd ref='2' />
+    <tag k="highway"/>
+  </way>
+</osm>

@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='true' generator='JOSM'>
+  <bounds minlat='40.7123863' minlon='-73.9866972' maxlat='40.7128254' maxlon='-73.9860964' origin='CGImap 0.3.3 (9481 thorn-01.openstreetmap.org)' />
+  <node id='1697937236' timestamp='2012-03-30T15:49:36Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7124356' lon='-73.9865155' />
+  <node id='1697937248' timestamp='2012-03-30T15:49:37Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7124674' lon='-73.986291' />
+  <node id='1697937261' timestamp='2012-03-30T15:49:37Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7124906' lon='-73.9866094' />
+  <node id='1697937274' timestamp='2012-03-30T15:49:37Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.71252' lon='-73.9864293' />
+  <node id='1697937276' timestamp='2012-03-30T15:49:38Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7125238' lon='-73.9863858' />
+  <node id='1697937285' timestamp='2012-03-30T15:49:38Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7125403' lon='-73.9862157' />
+  <node id='1697937288' timestamp='2012-03-30T15:49:38Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7125735' lon='-73.9865249' />
+  <node id='1697937295' timestamp='2012-03-30T15:49:39Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7126072' lon='-73.9865308' />
+  <node id='1697937296' timestamp='2012-03-30T15:49:39Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7126142' lon='-73.9863399' />
+  <node id='1697937304' timestamp='2012-03-30T15:49:39Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7126613' lon='-73.9866216' />
+  <node id='1697937308' timestamp='2012-03-30T15:49:40Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7126725' lon='-73.9864256' />
+  <node id='1697937309' timestamp='2012-03-30T15:49:40Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.712673' lon='-73.9864564' />
+  <node id='1697937314' timestamp='2012-03-30T15:49:40Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7127119' lon='-73.9862388' />
+  <node id='1697937319' timestamp='2012-03-30T15:49:40Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7127278' lon='-73.9863444' />
+  <node id='1697937320' timestamp='2012-03-30T15:49:40Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7127293' lon='-73.9865511' />
+  <node id='1697937323' timestamp='2012-03-30T15:49:41Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7127366' lon='-73.9863592' />
+  <node id='1697937326' timestamp='2012-03-30T15:49:41Z' uid='330773' user='Roadrunner21' visible='true' version='1' changeset='11156427' lat='40.7127568' lon='-73.9863143' />
+  <way id='157564398' timestamp='2014-02-07T20:04:22Z' uid='1679' user='andrewpmk' visible='true' version='3' changeset='20436806'>
+    <nd ref='1697937308' />
+    <nd ref='1697937323' />
+    <nd ref='1697937319' />
+    <nd ref='1697937326' />
+    <nd ref='1697937314' />
+    <nd ref='1697937296' />
+    <nd ref='1697937285' />
+    <nd ref='1697937248' />
+    <nd ref='1697937276' />
+    <nd ref='1697937274' />
+    <nd ref='1697937236' />
+    <nd ref='1697937261' />
+    <nd ref='1697937288' />
+    <nd ref='1697937295' />
+    <nd ref='1697937304' />
+    <nd ref='1697937320' />
+    <nd ref='1697937309' />
+    <nd ref='1697937308' />
+    <tag k='building' v='apartments' />
+    <tag k='height' v='42' />
+  </way>
+</osm>
