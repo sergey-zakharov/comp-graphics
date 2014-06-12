@@ -20,6 +20,8 @@
 #include "BuildingMaterial.h"
 #include "RoadMaterial.h"
 #include "GroundMaterial.h"
+#include "Camera.h"
+#include "Mesh.h"
 
 class Application
 {
@@ -94,6 +96,7 @@ protected:
 	//идентификаторы текстурных объектов
 	GLuint _buildingTexId;
 	GLuint _roadTexId;
+	GLuint _groundTexId;
 
 	GLuint _sampler;
 	GLuint _repeatSampler;
@@ -155,11 +158,13 @@ protected:
 
 	MapWorker* worker;
 
+	Camera _mainCamera;
+
 	//Читает текст шейдера из файла и создает объект
 	GLuint createShader(GLenum shaderType, std::string filename);
 
 	void makeSceneImplementation();
-	void drawImplementation();
+	//void drawImplementation();
 	
 	GLuint loadTexture( std::string filename );
 	GLuint loadTextureWithMipmaps( std::string filename );
@@ -168,8 +173,10 @@ protected:
 	GLuint makeShader( GLenum shaderType, std::string filename ); //Читает текст шейдера из файла и создает объект
 	GLuint makeShaderProgram( std::string vertFilename, std::string fragFilename ); //создает вершинный и фрагментный шейдеры и линкует их
 
-	void drawBuidlingsOnScene( Camera& camera );
+	void drawScene( Camera& camera );
+	void drawBuildingsOnScene( Camera& camera );
 	void drawRoadsOnScene( Camera& camera );
+	void drawGroundOnScene( Camera& camera );
 
 	Mesh _buildings;
 	Mesh _roads;

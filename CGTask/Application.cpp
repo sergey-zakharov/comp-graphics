@@ -190,58 +190,23 @@ void Application::run()
 	}
 }
 
-void Application::draw()
-{
-	int width, height;
-	glfwGetFramebufferSize(_window, &width, &height);
-	glViewport(0, 0, width, height);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	_projMatrix = glm::perspective(45.0f, (float)width / height, 0.1f, 1000.f);
-
-	drawImplementation();
-
-	glfwSwapBuffers(_window); 
-}
+//void Application::draw()
+//{
+//	int width, height;
+//	glfwGetFramebufferSize(_window, &width, &height);
+//	glViewport(0, 0, width, height);
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//	_projMatrix = glm::perspective(45.0f, (float)width / height, 0.1f, 1000.f);
+//
+//	drawImplementation();
+//
+//	glfwSwapBuffers(_window); 
+//}
 
 void Application::update()
 {
-	float dt = glfwGetTime() - _oldTime;
-	_oldTime = glfwGetTime();
-
-	float speed = 5.0;
-	float zoomSpeed = 40.0;
-	float moveSpeed = 25.0;
-
-	if( _rotateLeft ) {
-		_phiAng -= speed * dt;
-	}
-	if( _rotateRight ) {
-		_phiAng += speed * dt;
-	}
-	if( _rotateUp ) {
-		_thetaAng += speed * dt;
-	}
-	if( _rotateDown ) {
-		_thetaAng -= speed * dt;
-	}
-	if( _zoomIn ) {
-		_distance -= zoomSpeed * dt;
-	}
-	if( _zoomOut ) {
-		_distance += zoomSpeed * dt;
-	}
-	if( _moveLeft ) {
-		_offset += moveSpeed * dt;
-	}
-	if( _moveRight ) {
-		_offset -= moveSpeed * dt;
-	}
-
-	_thetaAng = glm::clamp<float>(_thetaAng, -(float)M_PI * 0.45f, (float)M_PI * 0.45f);
-	glm::vec3 pos = glm::vec3(glm::cos(_phiAng) * glm::cos(_thetaAng), glm::sin(_phiAng) * glm::cos(_thetaAng), glm::sin(_thetaAng)) * _distance;
-
-	_viewMatrix = glm::lookAt(pos, glm::vec3(1.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	_mainCamera.update();
 }
 
 GLuint Application::createShader(GLenum shaderType, std::string filename)
@@ -283,185 +248,235 @@ GLuint Application::createShader(GLenum shaderType, std::string filename)
 	return vs;
 }
 
+void Application::draw()
+{
+	//Настройки размеров (если пользователь изменил размеры окна)
+	int width, height;
+	glfwGetFramebufferSize( _window, &width, &height );
+	_mainCamera.setWindowSize( width, height );
+
+	glViewport( 0, 0, width, height );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+
+	drawScene( _mainCamera );
+
+	/*if( demoNum == 2 ) {
+		glViewport( 0, 0, 200, 200 );
+		glClear( GL_DEPTH_BUFFER_BIT );
+		drawScene( _secondCamera );
+	}*/
+
+	glfwSwapBuffers( _window );
+}
+
 void Application::makeSceneImplementation()
 {
-	_commonMaterial.initialize();
-	_skyBoxMaterial.initialize();
+	_buildingMaterial.initialize();
+	_roadMaterial.initialize();
+	_groundMaterial.initialize();
 
 	_buildingTexId = loadTexture( "../images/brick.jpg" );
 	_roadTexId = loadTexture( "../images/road.jpg" );
-
-	makeSurface();
-	makeBuildings();
-	makeRoads();
-	makeShaders();
-	initData();
-}
-
-void Application::makeShaders()
-{
-	std::string vertFilename = "../shaders/CGTask/shader.vert";
-	std::string fragFilename = "../shaders/CGTask/shader.frag";
-
-	GLuint vs = createShader(GL_VERTEX_SHADER, vertFilename);
-	GLuint fs = createShader(GL_FRAGMENT_SHADER, fragFilename);
-
-	_shaderProgram = glCreateProgram();
-	glAttachShader(_shaderProgram, fs);
-	glAttachShader(_shaderProgram, vs);
-	glLinkProgram(_shaderProgram);
-	
-}
-void Application::drawImplementation()
-{
-	glUseProgram(_shaderProgram);
-
-	//Копирование на видеокарту значений uniform-пемеренных, общих для всех объектов
-	glUniformMatrix4fv(_viewMatrixUniform, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
-	glUniformMatrix4fv(_projMatrixUniform, 1, GL_FALSE, glm::value_ptr(_projMatrix));
-
-	glUniform4fv( _lightDirUniform, 1, glm::value_ptr( _lightDir ) );
-	glUniform4fv( _lightPosUniform, 1, glm::value_ptr( _lightPos ) );
-	glUniform3fv( _ambientColorUniform, 1, glm::value_ptr( _ambientColor ) );
-	glUniform3fv( _diffuseColorUniform, 1, glm::value_ptr( _diffuseColor ) );
-	glUniform3fv( _specularColorUniform, 1, glm::value_ptr( _specularColor ) );
-	glUniform1f( _attenuationUniform, _attenuation );
-
-
-	glUniform1i( _diffuseTexUniform, 0 ); //текстурный юнит 0
-	glUniform1i( _specularTexUniform, 1 ); //текстурный юнит 1
+	_groundTexId = loadTexture( "../images/ground.jpg" );
 
 	
-
-	//====== Поверхность ======
-	//Копирование на видеокарту значений uniform-пемеренных для сферы
-	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _surfaceModelMatrix)));
-	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
-
-	glBindVertexArray(_surfaceVao); //Подключаем VertexArray для поверхности
-	glUniform3fv(_materialUniform, 1, glm::value_ptr(_surfaceMaterial));
-
-	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_surfaceModelMatrix));
-
-	glBindVertexArray(_surfaceVao); //Подключаем VertexArray для сферы
-	//glUniform1i(_isWireframeUniform, false);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем поверхность
-
-
-	// активизация текстур
-	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
-	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
-	glBindSampler( 0, _sampler );
-
-	//====== Здания ======
-	//Копирование на видеокарту значений uniform-пемеренных для зданий
-	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _buildingModelMatrix)));
-	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
-
-	glUniform3fv(_materialUniform, 1, glm::value_ptr(_buildingMaterial));
-	glUniform1f( _shininessUniform, _shininess1 );
-
-	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_buildingModelMatrix));
-
-	glBindVertexArray(_buildingVao); //Подключаем VertexArray для здания
+	//загрузка 3д-моделей
+	_buildings = Mesh::makeBuildings(worker);
+	_roads = Mesh::makeRoads( worker );
+	_ground = Mesh::makeGround();
 	
-	//glUniform1i(_isBuildingUniform, true);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, _buildingNumTris * 3); //Рисуем здание
-
-
-
-	// активизация текстур
-	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
-	glBindTexture( GL_TEXTURE_2D, _roadTexId );
-	glBindSampler( 0, _sampler );
-
-	//====== Дороги ======
-	//Копирование на видеокарту значений uniform-пемеренных для дорог
-	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _roadModelMatrix)));
-	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
-
-	glUniform3fv(_materialUniform, 1, glm::value_ptr(_roadMaterial));
-
-	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_roadModelMatrix));
-
-	glBindVertexArray(_roadVao); //Подключаем VertexArray для дорог
-
-
-	
-
-	//glUniform1i(_isBuildingUniform, true);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, _roadNumTris * 3); //Рисуем здание
-	/*glUniform1i(_isBuildingUniform, true);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3);*/ //Рисуем поверхность
-	
-	//glUniform1i(_isBuildingUniform, false);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем поверхность
-
-	//glUniform1i(_isWireframeUniform, true);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glLineWidth(2.0);
-	//glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем сеточкой
-}
-void Application::initData()
-{
-
-	//Инициализация матриц
-	_viewMatrix = glm::lookAt( glm::vec3( 0.0f, -5.0f, 0.0f ), glm::vec3( 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
-	_projMatrix = glm::perspective( glm::radians( 45.0f ), 4.0f / 3.0f, 0.1f, 10000.f );
-
-
-	_surfaceMaterial = glm::vec3( 0.0, 1.0, 0.0 );
-	_buildingMaterial = glm::vec3( 0.0, 0.0, 1.0 );
-	_roadMaterial = glm::vec3( 0.0, 0.0, 1. );
-
 	//Инициализация значений переменных освщения
-	_lightDir = glm::vec4( 0.0f, 1.0f, 0.8f, 0.0f );
-	_lightPos = glm::vec4( 10.0f, 10.0f, 200.f, .01f );
+	_lightPos = glm::vec4( 2.0f, 2.0f, 0.5f, 1.0f );
 	_ambientColor = glm::vec3( 0.2, 0.2, 0.2 );
 	_diffuseColor = glm::vec3( 0.8, 0.8, 0.8 );
 	_specularColor = glm::vec3( 0.5, 0.5, 0.5 );
-	_attenuation = 1.0f;
 
-	//Инициализация материалов
-	_shininess1 = 100.0f;
-	_material1 = glm::vec3( 1.0, 0.0, 0.0 );
-
-	_shininess2 = 100.0f;
-	_material2 = glm::vec3( 0.0, 1.0, 0.0 );
-
-	
-
-	//====
-	GLfloat maxAniso = 0.0f;
-	glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso );
-
-	std::cout << "Max anistropy " << maxAniso << std::endl;
-	//====
-
-	//Инициализация сэмплера, объекта, который хранит параметры чтения из текстуры
+	//Инициализация сэмплера - объекта, который хранит параметры чтения из текстуры
 	glGenSamplers( 1, &_sampler );
-	glSamplerParameteri( _sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	glSamplerParameteri( _sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glSamplerParameteri( _sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glSamplerParameteri( _sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	glSamplerParameteri( _sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glSamplerParameteri( _sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
+	glGenSamplers( 1, &_repeatSampler );
 	glSamplerParameteri( _repeatSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glSamplerParameteri( _repeatSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-
 	glSamplerParameterf( _repeatSampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f );
-
 	glSamplerParameteri( _repeatSampler, GL_TEXTURE_WRAP_S, GL_REPEAT );
 	glSamplerParameteri( _repeatSampler, GL_TEXTURE_WRAP_T, GL_REPEAT );
-
-
 }
 
-void Application::drawBuidlingsOnScene( Camera& camera )
+//void Application::makeShaders()
+//{
+//	std::string vertFilename = "../shaders/CGTask/shader.vert";
+//	std::string fragFilename = "../shaders/CGTask/shader.frag";
+//
+//	GLuint vs = createShader(GL_VERTEX_SHADER, vertFilename);
+//	GLuint fs = createShader(GL_FRAGMENT_SHADER, fragFilename);
+//
+//	_shaderProgram = glCreateProgram();
+//	glAttachShader(_shaderProgram, fs);
+//	glAttachShader(_shaderProgram, vs);
+//	glLinkProgram(_shaderProgram);
+//	
+//}
+//void Application::drawImplementation()
+//{
+//	glUseProgram(_shaderProgram);
+//
+//	//Копирование на видеокарту значений uniform-пемеренных, общих для всех объектов
+//	glUniformMatrix4fv(_viewMatrixUniform, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
+//	glUniformMatrix4fv(_projMatrixUniform, 1, GL_FALSE, glm::value_ptr(_projMatrix));
+//
+//	glUniform4fv( _lightDirUniform, 1, glm::value_ptr( _lightDir ) );
+//	glUniform4fv( _lightPosUniform, 1, glm::value_ptr( _lightPos ) );
+//	glUniform3fv( _ambientColorUniform, 1, glm::value_ptr( _ambientColor ) );
+//	glUniform3fv( _diffuseColorUniform, 1, glm::value_ptr( _diffuseColor ) );
+//	glUniform3fv( _specularColorUniform, 1, glm::value_ptr( _specularColor ) );
+//	glUniform1f( _attenuationUniform, _attenuation );
+//
+//
+//	glUniform1i( _diffuseTexUniform, 0 ); //текстурный юнит 0
+//	glUniform1i( _specularTexUniform, 1 ); //текстурный юнит 1
+//
+//	
+//
+//	//====== Поверхность ======
+//	//Копирование на видеокарту значений uniform-пемеренных для сферы
+//	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _surfaceModelMatrix)));
+//	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
+//
+//	glBindVertexArray(_surfaceVao); //Подключаем VertexArray для поверхности
+//	glUniform3fv(_materialUniform, 1, glm::value_ptr(_surfaceMaterial));
+//
+//	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_surfaceModelMatrix));
+//
+//	glBindVertexArray(_surfaceVao); //Подключаем VertexArray для сферы
+//	//glUniform1i(_isWireframeUniform, false);
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем поверхность
+//
+//
+//	// активизация текстур
+//	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+//	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
+//	glBindSampler( 0, _sampler );
+//
+//	//====== Здания ======
+//	//Копирование на видеокарту значений uniform-пемеренных для зданий
+//	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _buildingModelMatrix)));
+//	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
+//
+//	glUniform3fv(_materialUniform, 1, glm::value_ptr(_buildingMaterial));
+//	glUniform1f( _shininessUniform, _shininess1 );
+//
+//	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_buildingModelMatrix));
+//
+//	glBindVertexArray(_buildingVao); //Подключаем VertexArray для здания
+//	
+//	//glUniform1i(_isBuildingUniform, true);
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	glDrawArrays(GL_TRIANGLES, 0, _buildingNumTris * 3); //Рисуем здание
+//
+//
+//
+//	// активизация текстур
+//	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+//	glBindTexture( GL_TEXTURE_2D, _roadTexId );
+//	glBindSampler( 0, _sampler );
+//
+//	//====== Дороги ======
+//	//Копирование на видеокарту значений uniform-пемеренных для дорог
+//	_normalToCameraMatrix = glm::transpose(glm::inverse(glm::mat3(_viewMatrix * _roadModelMatrix)));
+//	glUniformMatrix3fv(_normalToCameraMatrixUniform, 1, GL_FALSE, glm::value_ptr(_normalToCameraMatrix));
+//
+//	glUniform3fv(_materialUniform, 1, glm::value_ptr(_roadMaterial));
+//
+//	glUniformMatrix4fv(_modelMatrixUniform, 1, GL_FALSE, glm::value_ptr(_roadModelMatrix));
+//
+//	glBindVertexArray(_roadVao); //Подключаем VertexArray для дорог
+//
+//
+//	
+//
+//	//glUniform1i(_isBuildingUniform, true);
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	glDrawArrays(GL_TRIANGLES, 0, _roadNumTris * 3); //Рисуем здание
+//	/*glUniform1i(_isBuildingUniform, true);
+//	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3);*/ //Рисуем поверхность
+//	
+//	//glUniform1i(_isBuildingUniform, false);
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//	//glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем поверхность
+//
+//	//glUniform1i(_isWireframeUniform, true);
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//	//glLineWidth(2.0);
+//	//glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем сеточкой
+//}
+//void Application::initData()
+//{
+//
+//	//Инициализация матриц
+//	_viewMatrix = glm::lookAt( glm::vec3( 0.0f, -5.0f, 0.0f ), glm::vec3( 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+//	_projMatrix = glm::perspective( glm::radians( 45.0f ), 4.0f / 3.0f, 0.1f, 10000.f );
+//
+//
+//	_surfaceMaterial = glm::vec3( 0.0, 1.0, 0.0 );
+//	_buildingMaterial = glm::vec3( 0.0, 0.0, 1.0 );
+//	_roadMaterial = glm::vec3( 0.0, 0.0, 1. );
+//
+//	//Инициализация значений переменных освщения
+//	_lightDir = glm::vec4( 0.0f, 1.0f, 0.8f, 0.0f );
+//	_lightPos = glm::vec4( 10.0f, 10.0f, 200.f, .01f );
+//	_ambientColor = glm::vec3( 0.2, 0.2, 0.2 );
+//	_diffuseColor = glm::vec3( 0.8, 0.8, 0.8 );
+//	_specularColor = glm::vec3( 0.5, 0.5, 0.5 );
+//	_attenuation = 1.0f;
+//
+//	//Инициализация материалов
+//	_shininess1 = 100.0f;
+//	_material1 = glm::vec3( 1.0, 0.0, 0.0 );
+//
+//	_shininess2 = 100.0f;
+//	_material2 = glm::vec3( 0.0, 1.0, 0.0 );
+//
+//	
+//
+//	//====
+//	GLfloat maxAniso = 0.0f;
+//	glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso );
+//
+//	std::cout << "Max anistropy " << maxAniso << std::endl;
+//	//====
+//
+//	//Инициализация сэмплера, объекта, который хранит параметры чтения из текстуры
+//	glGenSamplers( 1, &_sampler );
+//	glSamplerParameteri( _sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+//	glSamplerParameteri( _sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+//	glSamplerParameteri( _sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+//	glSamplerParameteri( _sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+//
+//	glSamplerParameteri( _repeatSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+//	glSamplerParameteri( _repeatSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+//
+//	glSamplerParameterf( _repeatSampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f );
+//
+//	glSamplerParameteri( _repeatSampler, GL_TEXTURE_WRAP_S, GL_REPEAT );
+//	glSamplerParameteri( _repeatSampler, GL_TEXTURE_WRAP_T, GL_REPEAT );
+//
+//
+//}
+
+
+void Application::drawScene( Camera& camera ) {
+	drawGroundOnScene( camera );
+	drawBuildingsOnScene( camera );
+	drawRoadsOnScene( camera );
+}
+
+void Application::drawBuildingsOnScene( Camera& camera )
 {
 	//====== Buildings ======	
 	glUseProgram( _buildingMaterial.getProgramId() ); //Подключаем общий шейдер для всех объектов
@@ -655,5 +670,39 @@ void Application::drawRoadsOnScene( Camera& camera )
 
 	//glDisable( GL_STENCIL_TEST );
 	//glDisable( GL_BLEND );
+	glDisable( GL_CULL_FACE );
+}
+void Application::drawGroundOnScene( Camera& camera )
+{
+	glUseProgram( _groundMaterial.getProgramId() ); //Подключаем общий шейдер для всех объектов
+
+	_groundMaterial.setTime( (float)glfwGetTime() );
+	_groundMaterial.setViewMatrix( camera.getViewMatrix() );
+	_groundMaterial.setProjectionMatrix( camera.getProjMatrix() );
+
+	_groundMaterial.setLightPos( _lightPos );
+	_groundMaterial.setAmbientColor( _ambientColor );
+	_groundMaterial.setDiffuseColor( _diffuseColor );
+	_groundMaterial.setSpecularColor( _specularColor );
+
+	_groundMaterial.applyCommonUniforms();
+
+	glEnable( GL_CULL_FACE );
+	glFrontFace( GL_CW );
+	glCullFace( GL_BACK );
+	
+	//====== Ground ======
+	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	glBindTexture( GL_TEXTURE_2D, _groundTexId );
+	glBindSampler( 0, _sampler );
+
+	_groundMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	_groundMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
+	_groundMaterial.setShininess( 100.0f );
+	_groundMaterial.applyModelSpecificUniforms();
+
+	glBindVertexArray( _ground.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _ground.getNumVertices() ); //Рисуем сферу
+
 	glDisable( GL_CULL_FACE );
 }

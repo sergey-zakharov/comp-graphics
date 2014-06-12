@@ -4,8 +4,6 @@
 #include <vector>
 
 #include "Mesh.h"
-#include "mapWorker.h"
-#include "geometry.h"
 
 using namespace std;
 //=========================================================
@@ -18,32 +16,42 @@ const float B = -5;
 const float C = 0;
 
 int paveBuildings( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors );
+int paveRoads( MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors );
+int pave_floor( float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors );
+int pave_wall( double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, bool col );
+int pave_roof( vector<vector<pair<float, float>>> triangles, double height, std::vector<float>& vertices, std::vector<float>& colors );
+int pave_road( double first_x, double first_y, double second_x, double second_y, std::vector<float>& vertices, std::vector<float>& colors );
 
-float frand( float low, float high )
-{
-	return low + (high - low) * (rand() % 1000) * 0.001f;
-}
+std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> getRoadCorners( double first_x, double first_y, double second_x, double second_y, double roadHalfWidth );
+std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> getNormRoadCorners( std::pair<std::pair<double, double>, std::pair<double, double>> vertexes, double roadHalfWidth );
+std::pair<std::pair<double, double>, std::pair<double, double>> turnOnAngle( std::pair<std::pair<double, double>, std::pair<double, double>> corners, double angle );
+double getAngleToXO( std::pair<std::pair<double, double>, std::pair<double, double>> corners );
 
-void addVec2( std::vector<float>& vec, float s, float t )
-{
-	vec.push_back( s );
-	vec.push_back( t );
-}
+//float frand( float low, float high )
+//{
+//	return low + (high - low) * (rand() % 1000) * 0.001f;
+//}
 
-void addVec3( std::vector<float>& vec, float x, float y, float z )
-{
-	vec.push_back( x );
-	vec.push_back( y );
-	vec.push_back( z );
-}
-
-void addVec4( std::vector<float>& vec, float r, float g, float b, float a )
-{
-	vec.push_back( r );
-	vec.push_back( g );
-	vec.push_back( b );
-	vec.push_back( a );
-}
+//void addVec2( std::vector<float>& vec, float s, float t )
+//{
+//	vec.push_back( s );
+//	vec.push_back( t );
+//}
+//
+//void addVec3( std::vector<float>& vec, float x, float y, float z )
+//{
+//	vec.push_back( x );
+//	vec.push_back( y );
+//	vec.push_back( z );
+//}
+//
+//void addVec4( std::vector<float>& vec, float r, float g, float b, float a )
+//{
+//	vec.push_back( r );
+//	vec.push_back( g );
+//	vec.push_back( b );
+//	vec.push_back( a );
+//}
 
 void addPoint( std::vector<float>& vec, float x, float y, float z )
 {
@@ -61,26 +69,26 @@ void addColor( std::vector<float>& vec, float r, float g, float b, float a )
 }
 
 //вычисление цвета по линейной палитре
-void getColorFromLinearPalette( float value, float& r, float& g, float& b )
-{
-	if( value < 0.25f ) {
-		r = 0.0f;
-		g = value * 4.0f;
-		b = 1.0f;
-	} else if( value < 0.5f ) {
-		r = 0.0f;
-		g = 1.0f;
-		b = (0.5f - value) * 4.0f;
-	} else if( value < 0.75f ) {
-		r = (value - 0.5f) * 4.0f;
-		g = 1.0f;
-		b = 0.0f;
-	} else {
-		r = 1.0f;
-		g = (1.0f - value) * 4.0f;
-		b = 0.0f;
-	}
-}
+//void getColorFromLinearPalette( float value, float& r, float& g, float& b )
+//{
+//	if( value < 0.25f ) {
+//		r = 0.0f;
+//		g = value * 4.0f;
+//		b = 1.0f;
+//	} else if( value < 0.5f ) {
+//		r = 0.0f;
+//		g = 1.0f;
+//		b = (0.5f - value) * 4.0f;
+//	} else if( value < 0.75f ) {
+//		r = (value - 0.5f) * 4.0f;
+//		g = 1.0f;
+//		b = 0.0f;
+//	} else {
+//		r = 1.0f;
+//		g = (1.0f - value) * 4.0f;
+//		b = 0.0f;
+//	}
+//}
 
 //=========================================================
 
@@ -192,6 +200,10 @@ Mesh Mesh::makeRoads(MapWorker* worker)
 	//_roadModelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
 	return Mesh( roadVao, roadNumTris * 3 );
 }
+
+
+////// Paving functions //////////////
+
 // используя pave_road отрисовать дороги
 int paveRoads(MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors )
 {
@@ -216,7 +228,6 @@ int paveRoads(MapWorker* worker, std::vector<float>& vertices, std::vector<float
 
 	return roadNumTris;
 }
-
 
 // используя pave_wall и paveRoof отрисовать дома
 int paveBuildings(MapWorker* worker, std::vector<float>& vertices, std::vector<float>& colors )
@@ -426,7 +437,7 @@ int pave_road( double first_x, double first_y, double second_x, double second_y,
 	return roadNumTris;
 }
 
-// road utils
+////////// Road utils ////////////////
 std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> getRoadCorners( double first_x, double first_y, double second_x, double second_y, double roadHalfWidth )
 {
 	std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> corners;
