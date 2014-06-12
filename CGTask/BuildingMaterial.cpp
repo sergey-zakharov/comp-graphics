@@ -11,8 +11,8 @@ BuildingMaterial::BuildingMaterial()
 void BuildingMaterial::initialize()
 {
 	
-	std::string vertFilename = "../shaders/CGTask/shader.vert";
-	std::string fragFilename = "../shaders/CGTask/shader.frag";
+	std::string vertFilename = "../shaders/CGTask/building.vert";
+	std::string fragFilename = "../shaders/CGTask/building.frag";
 
 	_programId = makeShaderProgram( vertFilename, fragFilename );
 

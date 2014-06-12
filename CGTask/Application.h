@@ -19,6 +19,7 @@
 #include "mapWorker.h"
 #include "BuildingMaterial.h"
 #include "RoadMaterial.h"
+#include "GroundMaterial.h"
 
 class Application
 {
@@ -58,8 +59,9 @@ public:
 	void moveRight(bool b) { _moveRight = b; }
 protected:
 
-	BuildingMaterial _commonMaterial;
-	RoadMaterial _skyBoxMaterial;
+	BuildingMaterial _buildingMaterial;
+	RoadMaterial _roadMaterial;
+	GroundMaterial _groundMaterial;
 
 	void makeSurface();
 	void makeShaders();
@@ -119,15 +121,15 @@ protected:
 	glm::mat4 _surfaceModelMatrix;
 	int _surfaceNumTris;
 
-	GLuint _buildingVao;
-	glm::mat4 _buildingModelMatrix;
-	glm::vec3 _buildingMaterial;
-	int _buildingNumTris;
+	//GLuint _buildingVao;
+	//glm::mat4 _buildingModelMatrix;
+	//glm::vec3 _buildingMaterial;
+	//int _buildingNumTris;
 
-	GLuint _roadVao;
-	glm::mat4 _roadModelMatrix;
-	glm::vec3 _roadMaterial;
-	int _roadNumTris;
+	//GLuint _roadVao;
+	//glm::mat4 _roadModelMatrix;
+	//glm::vec3 _roadMaterial;
+	//int _roadNumTris;
 
 
 	glm::vec3 _surfaceMaterial;
@@ -158,19 +160,6 @@ protected:
 
 	void makeSceneImplementation();
 	void drawImplementation();
-	void pave_floor(float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors);
-	void pave_wall(double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, bool col);
-	void pave_road(double first_x, double first_y, double second_x, double second_y, std::vector<float>& vertices, std::vector<float>& colors);
-	void pave_roof( std::vector<std::vector<std::pair<float, float>>>, double height, std::vector<float>& vertices, std::vector<float>& colors );
-
-	void makeBuildings(std::vector<float>& vertices, std::vector<float>& colors);
-	void makeRoads(std::vector<float>& vertices, std::vector<float>& colors);
-	
-	std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> getRoadCorners(double first_x, double first_y, double second_x, double second_y, double roadHalfWidth);
-	std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> getNormRoadCorners(std::pair<std::pair<double, double>, std::pair<double, double>> corners, double roadHalfWidth);
-	std::pair<std::pair<double, double>, std::pair<double, double>> turnOnAngle(std::pair<std::pair<double, double>, std::pair<double, double>> corners, double angle);
-	double Application::getAngleToXO(std::pair<std::pair<double, double>, std::pair<double, double>> corners);
-	//std::pair<double, double>, std::pair<double, double>
 	
 	GLuint loadTexture( std::string filename );
 	GLuint loadTextureWithMipmaps( std::string filename );
@@ -178,4 +167,12 @@ protected:
 
 	GLuint makeShader( GLenum shaderType, std::string filename ); //Читает текст шейдера из файла и создает объект
 	GLuint makeShaderProgram( std::string vertFilename, std::string fragFilename ); //создает вершинный и фрагментный шейдеры и линкует их
+
+	void drawBuidlingsOnScene( Camera& camera );
+	void drawRoadsOnScene( Camera& camera );
+
+	Mesh _buildings;
+	Mesh _roads;
+	Mesh _ground;
+
 };

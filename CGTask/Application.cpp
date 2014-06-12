@@ -4,8 +4,9 @@
 
 
 #include "Application.h"
-#include "mapWorker.h"
-#include "geometry.h"
+#include "Camera.h"
+#include "Mesh.h"
+
 //#include "geometry.h"
 //#include "parse.h"
 
@@ -27,20 +28,7 @@ const char* file = "../house_in_ny.osm"; //house_in_ny , map_ny_cooper_triangle
 
 //====================================== Вспомогательные функции
 
-void addPoint(std::vector<float>& vec, float x, float y, float z)
-{
-	vec.push_back(x);
-	vec.push_back(y);
-	vec.push_back(z);
-}
 
-void addColor(std::vector<float>& vec, float r, float g, float b, float a)
-{
-	vec.push_back(r);
-	vec.push_back(g);
-	vec.push_back(b);
-	vec.push_back(a);
-}
 
 //======================================
 
@@ -310,102 +298,6 @@ void Application::makeSceneImplementation()
 	initData();
 }
 
-
-void Application::makeSurface()
-{
-	_surfaceNumTris = 0; 
-	float r = 0.1, g = 0.45, b = 0.0;
-
-	std::vector<float> vertices;
-	std::vector<float> colors;
-	
-	pave_floor(0, 0, 100, 100, vertices, colors);
-	//pave_wall(2, 2, 60, 50, 10, vertices, colors);
-
-	vertices.insert(vertices.end(), colors.begin(), colors.end());
-
-	unsigned int vbo = 0;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-	_surfaceVao = 0;
-	glGenVertexArrays(1, &_surfaceVao);
-	glBindVertexArray(_surfaceVao);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(_surfaceNumTris * 3 * 3 * 4));
-
-	glBindVertexArray(0);
-
-	_surfaceModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-}
-
-void Application::makeBuildings()
-{
-	_buildingNumTris = 0; 
-	//float r = 0.5, g = 0.6, b = 0.55;
-
-	std::vector<float> vertices;
-	std::vector<float> colors;
-
-	makeBuildings(vertices, colors);
-
-	vertices.insert(vertices.end(), colors.begin(), colors.end());
-
-	unsigned int vbo = 0;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-	_buildingVao = 0;
-	glGenVertexArrays(1, &_buildingVao);
-	glBindVertexArray(_buildingVao);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(_buildingNumTris * 3 * 3 * 4));
-
-	glBindVertexArray(0);
-
-	_buildingModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	
-}
-
-void Application::makeRoads()
-{
-	_roadNumTris = 0;
-	//float r = 0.5, g = 0.6, b = 0.55;
-
-	std::vector<float> vertices;
-	std::vector<float> colors;
-
-	makeRoads(vertices, colors);
-
-	vertices.insert(vertices.end(), colors.begin(), colors.end());
-
-	unsigned int vbo = 0;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-	_roadVao = 0;
-	glGenVertexArrays(1, &_roadVao);
-	glBindVertexArray(_roadVao);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(_roadNumTris * 3 * 3 * 4));
-
-	glBindVertexArray(0);
-
-	_roadModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-}
-
 void Application::makeShaders()
 {
 	std::string vertFilename = "../shaders/CGTask/shader.vert";
@@ -420,7 +312,6 @@ void Application::makeShaders()
 	glLinkProgram(_shaderProgram);
 	
 }
-
 void Application::drawImplementation()
 {
 	glUseProgram(_shaderProgram);
@@ -516,232 +407,6 @@ void Application::drawImplementation()
 	//glLineWidth(2.0);
 	//glDrawArrays(GL_TRIANGLES, 0, _surfaceNumTris * 3); //Рисуем сеточкой
 }
-
-void Application::pave_floor(float first_x, float first_y, float second_x, float second_y, std::vector<float>& vertices, std::vector<float>& colors)
-{
-	float r = 0.7, g = .7, b = 0.7;
-
-	int localXResolution = int(abs(first_x - second_x)); // округленное количество квадратов замощения
-	int localYResolution = int(abs(first_y - second_y));
-
-	float localA = first_x;
-	float localB = first_y;
-	float localC = C;
-
-	int iDirection = int(abs(second_x - first_x) / (second_x - first_x));
-	int jDirection = int(abs(second_y - first_y) / (second_y - first_y));
-
-	std::cout << "iDirection = " << iDirection << std::endl;
-	std::cout << "jDirection = " << jDirection << std::endl;
-	std::cout << "localXResolution = " << localXResolution << std::endl;
-	std::cout << "localYResolution = " << localYResolution << std::endl;
-
-	for( int i = 0; i < localXResolution; i++ ) {
-		for( int j = 0; j < localYResolution; j++ ) {
-
-			//Первый треугольник, образующий квадрат
-			addPoint(vertices, A + (float)j + jDirection, B + i, C);
-			addPoint(vertices, A + (float)j, B + i, C);
-			addPoint(vertices, A + (float)j, B + i + iDirection, C);
-
-			addColor(colors, r, g, b, 1.0);
-			addColor(colors, r, g, b, 1.0);
-			addColor(colors, r, g, b, 1.0);
-
-			_surfaceNumTris++;
-
-			//Второй треугольник, образующий квадрат
-			addPoint(vertices, A + 1. + (float)j, B + i, C);
-			addPoint(vertices, A + (float)j + jDirection, B + i + iDirection, C);
-			addPoint(vertices, A + (float)j, B + i + iDirection, C);
-
-			addColor(colors, r, g, b, 1.0);
-			addColor(colors, r, g, b, 1.0);
-			addColor(colors, r, g, b, 1.0);
-
-			_surfaceNumTris++;
-		}
-	}
-}
-
-void Application::pave_wall(double first_x, double first_y, double second_x, double second_y, double height, std::vector<float>& vertices, std::vector<float>& colors, bool col)
-{
-	float r, g, b;
-	if( col ) {
-		r = 1.;
-		g = .70;
-		b = 0.0;
-	} else {
-		r = 0.9; g = .60; b = 0.0;
-	}
-
-
-	//Первый треугольник, образующий квадрат
-	addPoint(vertices, first_x, first_y, C);
-	addPoint(vertices, second_x, second_y, C);
-	addPoint(vertices, first_x, first_y, height);
-
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-
-	_buildingNumTris++;
-
-	//Второй треугольник, образующий квадрат
-	addPoint(vertices, first_x, first_y, height);
-	addPoint(vertices, second_x, second_y, C);
-	addPoint(vertices, second_x, second_y, height);
-
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-
-	_buildingNumTris++;
-}
-
-void Application::pave_road(double first_x, double first_y, double second_x, double second_y, std::vector<float>& vertices, std::vector<float>& colors)
-{
-	float r, g, b;
-	r = 0.3; g = .3; b = 0.3;
-	
-	float roadHalfWidth = .5;
-	// требуется получить точку, лежащуу на фикс расстоянии от первой на перпердикуляре прямой a_1, a_2
-	std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> 
-		corners = getRoadCorners(first_x, first_y, second_x, second_y, roadHalfWidth);
-	std::pair<std::pair<double, double>, std::pair<double, double>> firstCorners = corners.first;
-	std::pair<std::pair<double, double>, std::pair<double, double>> secondCorners = corners.second;
-	
-
-	//Первый треугольник, образующий квадрат
-	/*addPoint(vertices, firstCorners.first.first, firstCorners.first.second, C + .05);
-	addPoint(vertices, secondCorners.first.first, secondCorners.first.second, C + .05);
-	addPoint(vertices, firstCorners.second.first, firstCorners.second.second, C + .05);*/
-
-	//addPoint(vertices, firstCorners.first.first, firstCorners.first.second, C + .05);
-	addPoint(vertices, firstCorners.first.first, firstCorners.first.second, C + .05);
-	addPoint(vertices, secondCorners.first.first, secondCorners.first.second, C + .05);
-	addPoint(vertices, firstCorners.second.first, firstCorners.second.second, C + .05);
-	
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-
-	_roadNumTris++;
-
-	//Второй треугольник, образующий квадрат
-	addPoint(vertices, firstCorners.second.first, firstCorners.second.second, C + .05);
-	addPoint(vertices, secondCorners.first.first, secondCorners.first.second, C + .05);
-	addPoint(vertices, secondCorners.second.first, secondCorners.second.second, C + .05);
-
-	
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-	addColor(colors, r, g, b, 1.0);
-
-	_roadNumTris++;
-}
-
-void Application::pave_roof( vector<vector<pair<float, float>>> triangles, double height, std::vector<float>& vertices, std::vector<float>& colors )
-{
-	float r, g, b;
-	r = 0.; g = 0.; b = 0.;
-
-	vector < vector<pair<float, float>>>::iterator it = triangles.begin();
-	for( ; it != triangles.end(); it++ ) {
-		addPoint( vertices, (*it)[0].first, (*it)[0].second, height );
-		addPoint( vertices, (*it)[1].first, (*it)[1].second, height );
-		addPoint( vertices, (*it)[2].first, (*it)[2].second, height );
-
-		addColor( colors, r, g, b, 1.0 );
-		addColor( colors, r, g, b, 1.0 );
-		addColor( colors, r, g, b, 1.0 );
-
-		_buildingNumTris++;
-	}
-
-}
-
-
-
-// используя pave_wall отрисовать дома
-void Application::makeBuildings(std::vector<float>& vertices, std::vector<float>& colors)
-{
-	std::vector<Building*/*way*/> buildings = worker->buildings;
-	for each (Building* building in buildings)
-	{
-		double height = building->getHeight();
-		std::vector<std::pair<double, double>> corners = building->getCorners();
-		
-		std::pair<double, double> curCorner = corners[0];
-		std::pair<double, double> nextCorner;
-		vector<pair<float, float>> roof_corners;
-
-		bool col;
-		for( int i = 1; i < corners.size(); i++ ) {
-			nextCorner = corners[i];
-			// отрисовываем стену
-			if( i % 2 == 1 ) {
-				col = true;
-			} 
-			else 
-				col = false;
-			pave_wall(curCorner.first/10., curCorner.second/10., nextCorner.first/10., nextCorner.second/10., height/10, vertices, colors, col);
-			curCorner = nextCorner;
-			//if( i != corners.size() - 1 ) {
-				roof_corners.push_back( pair<float, float>( curCorner.first / 10., curCorner.second / 10. ) );
-			//}
-		}
-		std::reverse( roof_corners.begin(), roof_corners.end() );
-		Polygon poly( roof_corners );
-		poly.triangulation();
-		vector<vector<pair<float, float>>> roof_tris = poly.saveIntoVector();
-		pave_roof( roof_tris, height/10, vertices, colors );
-	}
-	//vertices.insert( vertices.end(), colors.begin(), colors.end() );
-	vertices.insert( vertices.end(), colors.begin(), colors.end() );
-	
-	unsigned int vbo = 0;
-	glGenBuffers( 1, &vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( float ), vertices.data(), GL_STATIC_DRAW );
-
-	_buildingVao = 0;
-	glGenVertexArrays( 1, &_buildingVao );
-	glBindVertexArray( _buildingVao );
-	glEnableVertexAttribArray( 0 );
-	glEnableVertexAttribArray( 1 );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
-	glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(_buildingNumTris * 3 * 3 * 4) );
-}
-
-
-
-
-// используя pave_road отрисовать дороги
-void Application::makeRoads(std::vector<float>& vertices, std::vector<float>& colors)
-{
-	std::vector<Road*> roads = worker->roads;
-	for each (Road* road in roads)
-	{
-		double level = road->getLevel();
-		std::vector<std::pair<double, double>> vertexes = road->getVertexes();
-
-		std::pair<double, double> curVertex = vertexes[0];
-		std::pair<double, double> nextVertex;
-		bool col;
-		for( int i = 1; i < vertexes.size(); i++ ) {
-			nextVertex = vertexes[i];
-			pave_road(curVertex.first / 10., curVertex.second / 10., nextVertex.first / 10., nextVertex.second / 10., vertices, colors);
-			curVertex = nextVertex;
-		}
-
-	}
-	vertices.insert( vertices.end(), colors.begin(), colors.end() );
-	glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(_roadNumTris * 3 * 3 * 4) );
-}
-
-
 void Application::initData()
 {
 
@@ -796,93 +461,199 @@ void Application::initData()
 
 }
 
-std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> Application::getRoadCorners(double first_x, double first_y, double second_x, double second_y, double roadHalfWidth)
+void Application::drawBuidlingsOnScene( Camera& camera )
 {
-	std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> corners;
-	std::pair<std::pair<double, double>, std::pair<double, double>> coords =
-		std::pair<std::pair<double, double>, std::pair<double, double>>(
-		std::pair<double, double>(first_x, first_y),
-		std::pair<double, double>(second_x, second_y)
-		);
-	double angle = getAngleToXO(coords);
+	//====== Buildings ======	
+	glUseProgram( _buildingMaterial.getProgramId() ); //Подключаем общий шейдер для всех объектов
 
-	if( angle != 0.) {
-		std::pair<std::pair<double, double>, std::pair<double, double>> newCoords = turnOnAngle(coords, -angle);
-		corners = getNormRoadCorners(newCoords, roadHalfWidth);
-		corners.first = turnOnAngle(corners.first, angle);
-		corners.second = turnOnAngle(corners.second, angle);
-	} else {
-		corners = getNormRoadCorners(coords, roadHalfWidth);
+	_buildingMaterial.setTime( (float)glfwGetTime() );
+	_buildingMaterial.setViewMatrix( camera.getViewMatrix() );
+	_buildingMaterial.setProjectionMatrix( camera.getProjMatrix() );
+
+	_buildingMaterial.setLightPos( _lightPos );
+	_buildingMaterial.setAmbientColor( _ambientColor );
+	_buildingMaterial.setDiffuseColor( _diffuseColor );
+	_buildingMaterial.setSpecularColor( _specularColor );
+
+	_buildingMaterial.applyCommonUniforms();
+
+	//if( demoNum == 4 || demoNum == 5 ) {
+		glEnable( GL_CULL_FACE );
+		glFrontFace( GL_CW );
+		glCullFace( GL_BACK );
+	//}
+
+	/*if( demoNum == 5 ) {
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	}
 
-	return corners;
+	if( demoNum == 6 ) {
+		glEnable( GL_STENCIL_TEST );
+
+		glStencilFunc( GL_ALWAYS, 1, 1 );
+		glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
+	}*/
+
+	//====== Buildings ======
+	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
+	glBindSampler( 0, _sampler );
+
+	_buildingMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	_buildingMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
+	_buildingMaterial.setShininess( 100.0f );
+	_buildingMaterial.applyModelSpecificUniforms();
+
+	glBindVertexArray( _buildings.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _buildings.getNumVertices() ); //Рисуем сферу
+
+#if 0
+	glCullFace( GL_FRONT );
+	glBindVertexArray( _sphere.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _sphere.getNumVertices() ); //Рисуем сферу
+	glCullFace( GL_BACK );
+	glBindVertexArray( _sphere.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _sphere.getNumVertices() ); //Рисуем сферу	
+#endif
+
+	/*if( demoNum == 6 ) {
+		glStencilFunc( GL_NOTEQUAL, 1, 1 );
+		glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+	}*/
+
+	//====== Плоскость YZ ======
+	//glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	//glBindTexture( GL_TEXTURE_2D, _brickTexId );
+	//glBindSampler( 0, _sampler );
+
+	//_commonMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	//_commonMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) ) );
+	//_commonMaterial.setShininess( 100.0f );
+	//_commonMaterial.applyModelSpecificUniforms();
+
+	//glBindVertexArray( _plane.getVao() ); //Подключаем VertexArray для плоскости
+	//glDrawArrays( GL_TRIANGLES, 0, _plane.getNumVertices() ); //Рисуем плоскость
+
+	//if( demoNum == 3 ) {
+	//	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	//	glBindTexture( GL_TEXTURE_2D, _worldTexId );
+	//	glBindSampler( 0, _sampler );
+
+	//	_commonMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	//	_commonMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0001f, -1.0f, 0.0f ) ) );
+	//	_commonMaterial.setShininess( 100.0f );
+	//	_commonMaterial.applyModelSpecificUniforms();
+
+	//	//glDisable(GL_DEPTH_TEST);
+	//	//glPolygonOffset(-1.0f, -1.0f);
+
+	//	glBindVertexArray( _plane.getVao() ); //Подключаем VertexArray для плоскости
+	//	glDrawArrays( GL_TRIANGLES, 0, _plane.getNumVertices() ); //Рисуем плоскость
+
+	//	//glPolygonOffset(0.0f, 0.0f);
+	//	//glEnable(GL_DEPTH_TEST);
+	//}
+
+	//glDisable( GL_STENCIL_TEST );
+	//glDisable( GL_BLEND );
+	glDisable( GL_CULL_FACE );
 }
-
-std::pair< std::pair<std::pair<double, double>, std::pair<double, double>>, std::pair<std::pair<double, double>, std::pair<double, double>>> Application::getNormRoadCorners(std::pair<std::pair<double, double>, std::pair<double, double>> vertexes, double roadHalfWidth)
+void Application::drawRoadsOnScene( Camera& camera )
 {
-	double first_x = vertexes.first.first;
-	double first_y = vertexes.first.second;
-	double second_x = vertexes.second.first;
-	double second_y = vertexes.second.second;
+	//====== Buildings ======	
+	glUseProgram( _roadMaterial.getProgramId() ); //Подключаем общий шейдер для всех объектов
 
-	double first_right_x = first_x;
-	double first_right_y = first_y - roadHalfWidth;
-	
-	double first_left_x = first_x;
-	double first_left_y = first_y + roadHalfWidth;
+	_buildingMaterial.setTime( (float)glfwGetTime() );
+	_buildingMaterial.setViewMatrix( camera.getViewMatrix() );
+	_buildingMaterial.setProjectionMatrix( camera.getProjMatrix() );
 
-	double second_right_x = second_x;
-	double second_right_y = second_y - roadHalfWidth;
-	
-	double second_left_x = second_x;
-	double second_left_y = second_y + roadHalfWidth;
-	
-	return std::pair<std::pair<std::pair<double, double>,std::pair<double, double >> , 
-					 std::pair<std::pair<double, double>, std::pair<double, double>>
-					>(std::pair<std::pair<double, double>, std::pair<double, double >>
-						(std::pair<double, double >(first_right_x, first_right_y), 
-						 std::pair<double, double >(first_left_x, first_left_y)), 
-					  std::pair<std::pair<double, double>, std::pair<double, double >>
-					    (std::pair<double, double >(second_right_x, second_right_y), 
-					     std::pair<double, double >(second_left_x, second_left_y))
-					 );
-}
-std::pair<std::pair<double, double>, std::pair<double, double>> Application::turnOnAngle(std::pair<std::pair<double, double>, std::pair<double, double>> corners, double angle)
-{
-	double first_x = corners.first.first;
-	double first_y = corners.first.second;
-	double second_x = corners.second.first;
-	double second_y = corners.second.second;
+	_buildingMaterial.setLightPos( _lightPos );
+	_buildingMaterial.setAmbientColor( _ambientColor );
+	_buildingMaterial.setDiffuseColor( _diffuseColor );
+	_buildingMaterial.setSpecularColor( _specularColor );
 
-	// левосторонняя истема координат и положитеьное вращение против часовой
-	double res_first_x = first_x * cos(angle) - first_y * sin(angle);
-	double res_first_y = first_x * sin(angle) + first_y * cos(angle);
+	_buildingMaterial.applyCommonUniforms();
 
-	double res_second_x = second_x * cos(angle) - second_y * sin(angle);
-	double res_second_y = second_x * sin(angle) + second_y * cos(angle);
+	//if( demoNum == 4 || demoNum == 5 ) {
+	glEnable( GL_CULL_FACE );
+	glFrontFace( GL_CW );
+	glCullFace( GL_BACK );
+	//}
 
-	return std::pair<std::pair<double, double>, std::pair<double, double>>(
-		std::pair<double, double>(res_first_x, res_first_y),
-		std::pair<double, double>(res_second_x, res_second_y)
-		);
-}
-double Application::getAngleToXO(std::pair<std::pair<double, double>, std::pair<double, double>> corners)
-{
-	double first_x = corners.first.first;
-	double first_y = corners.first.second;
-	double second_x = corners.second.first;
-	double second_y = corners.second.second;
-
-	// get angle to XO
-	if( first_y == second_y ) {
-		return 0.;
+	/*if( demoNum == 5 ) {
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	}
-	else if( first_x == second_x ) {
-		return 90.;
-	} else {
-	// interesting part
-		double a = (second_y - first_y) / (second_x - first_x);
-		return atan(-a);
-	}
-}
 
+	if( demoNum == 6 ) {
+	glEnable( GL_STENCIL_TEST );
+
+	glStencilFunc( GL_ALWAYS, 1, 1 );
+	glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
+	}*/
+
+	//====== Buildings ======
+	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	glBindTexture( GL_TEXTURE_2D, _buildingTexId );
+	glBindSampler( 0, _sampler );
+
+	_buildingMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	_buildingMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
+	_buildingMaterial.setShininess( 100.0f );
+	_buildingMaterial.applyModelSpecificUniforms();
+
+	glBindVertexArray( _buildings.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _buildings.getNumVertices() ); //Рисуем сферу
+
+#if 0
+	glCullFace( GL_FRONT );
+	glBindVertexArray( _sphere.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _sphere.getNumVertices() ); //Рисуем сферу
+	glCullFace( GL_BACK );
+	glBindVertexArray( _sphere.getVao() ); //Подключаем VertexArray для сферы
+	glDrawArrays( GL_TRIANGLES, 0, _sphere.getNumVertices() ); //Рисуем сферу	
+#endif
+
+	/*if( demoNum == 6 ) {
+	glStencilFunc( GL_NOTEQUAL, 1, 1 );
+	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+	}*/
+
+	//====== Плоскость YZ ======
+	//glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	//glBindTexture( GL_TEXTURE_2D, _brickTexId );
+	//glBindSampler( 0, _sampler );
+
+	//_commonMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	//_commonMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) ) );
+	//_commonMaterial.setShininess( 100.0f );
+	//_commonMaterial.applyModelSpecificUniforms();
+
+	//glBindVertexArray( _plane.getVao() ); //Подключаем VertexArray для плоскости
+	//glDrawArrays( GL_TRIANGLES, 0, _plane.getNumVertices() ); //Рисуем плоскость
+
+	//if( demoNum == 3 ) {
+	//	glActiveTexture( GL_TEXTURE0 + 0 );  //текстурный юнит 0
+	//	glBindTexture( GL_TEXTURE_2D, _worldTexId );
+	//	glBindSampler( 0, _sampler );
+
+	//	_commonMaterial.setDiffuseTexUnit( 0 ); //текстурный юнит 0
+	//	_commonMaterial.setModelMatrix( glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0001f, -1.0f, 0.0f ) ) );
+	//	_commonMaterial.setShininess( 100.0f );
+	//	_commonMaterial.applyModelSpecificUniforms();
+
+	//	//glDisable(GL_DEPTH_TEST);
+	//	//glPolygonOffset(-1.0f, -1.0f);
+
+	//	glBindVertexArray( _plane.getVao() ); //Подключаем VertexArray для плоскости
+	//	glDrawArrays( GL_TRIANGLES, 0, _plane.getNumVertices() ); //Рисуем плоскость
+
+	//	//glPolygonOffset(0.0f, 0.0f);
+	//	//glEnable(GL_DEPTH_TEST);
+	//}
+
+	//glDisable( GL_STENCIL_TEST );
+	//glDisable( GL_BLEND );
+	glDisable( GL_CULL_FACE );
+}

@@ -23,8 +23,8 @@ public:
 	GLuint getVao() { return _vao; }
 	int getNumVertices() { return _numVertices; }
 
-	static Mesh makeBuildings();
-	static Mesh makeRoads();
+	static Mesh makeBuildings(MapWorker* worker);
+	static Mesh makeRoads( MapWorker* worker);
 	static Mesh makeGround();
 
 protected:
